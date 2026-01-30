@@ -19,5 +19,5 @@ clasp deploy --description "Deployed via slash command"
 3. Open the Web App URL (Optional verification)
 // turbo
 ```bash
-echo "Deployment complete. Use 'clasp open --webapp' to view."
+echo "Deployment complete. Use 'clasp open-web-app' to view."
 ```

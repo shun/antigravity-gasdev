@@ -59,7 +59,7 @@ clasp open
 ## Open Web App
 Opens the deployed web application.
 ```bash
-clasp open --webapp
+clasp open-web-app
 ```
 
 ## Troubleshooting
