@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        p {
+            color: var(--text-secondary);
+        }
+
+        /* Controls Section */
+        .controls {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        select,
+        input {
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            background-color: #fff;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Table Section */
+        .table-container {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.925rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+        }
+
+        /* Empty State */
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            display: none;
+        }
+
+        /* Skeleton Loading Animation */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .5;
+            }
+        }
+
+        .skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>住所データベース</h1>
+            <p>住所録を効率的に検索・絞り込みできます。</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="search">キーワード検索</label>
+                <input type="text" id="search" placeholder="検索...">
+            </div>
+            <div class="control-group">
+                <label for="filter-pref">都道府県 (Prefecture)</label>
+                <select id="filter-pref">
+                    <option value="">全ての都道府県</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="filter-city">市区町村 (City)</label>
+                <select id="filter-city">
+                    <option value="">全ての市区町村</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div id="loading" class="loading skeleton">読み込み中...</div>
+            <div id="no-results" class="no-results">該当するデータが見つかりませんでした。</div>
+            <table id="data-table" style="display: none;">
+                <thead>
+                    <tr id="table-head">
+                        <!-- Headers will be injected here -->
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Data rows will be injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let headers = [];
+
+        // Initialize
+        window.onload = function () {
+            google.script.run
+                .withSuccessHandler(onDataLoaded)
+                .withFailureHandler(onDataError)
+                .getData();
+        };
+
+        function onDataLoaded(response) {
+            document.getElementById('loading').style.display = 'none';
+
+            if (!response || response.data.length === 0) {
+                document.getElementById('no-results').style.display = 'block';
+                return;
+            }
+
+            headers = response.headers;
+            allData = response.data;
+
+            renderHeaders(headers);
+            populateFilters(allData);
+            renderTable(allData);
+            document.getElementById('data-table').style.display = 'table';
+
+            // Attach event listeners
+            document.getElementById('search').addEventListener('input', applyFilters);
+            document.getElementById('filter-pref').addEventListener('change', applyFilters);
+            document.getElementById('filter-city').addEventListener('change', applyFilters);
+        }
+
+        function onDataError(error) {
+            document.getElementById('loading').innerText = 'データ読み込みエラー: ' + error.message;
+            document.getElementById('loading').style.color = 'red';
+            document.getElementById('loading').classList.remove('skeleton');
+        }
+
+        function renderHeaders(headers) {
+            const tr = document.getElementById('table-head');
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                tr.appendChild(th);
+            });
+        }
+
+        function populateFilters(data) {
+            const prefSelect = document.getElementById('filter-pref');
+            const citySelect = document.getElementById('filter-city');
+
+            const prefs = new Set();
+            const cities = new Set();
+
+            data.forEach(item => {
+                if (item['都道府県']) prefs.add(item['都道府県']);
+                if (item['市区町村']) cities.add(item['市区町村']);
+            });
+
+            Array.from(prefs).sort().forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                prefSelect.appendChild(opt);
+            });
+
+            Array.from(cities).sort().forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                citySelect.appendChild(opt);
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                document.getElementById('no-results').style.display = 'block';
+                document.getElementById('data-table').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('no-results').style.display = 'none';
+                document.getElementById('data-table').style.display = 'table';
+            }
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = row[header];
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const pref = document.getElementById('filter-pref').value;
+            const city = document.getElementById('filter-city').value;
+
+            const filtered = allData.filter(item => {
+                // Text Search
+                const matchesSearch = Object.values(item).some(val =>
+                    String(val).toLowerCase().includes(search)
+                );
+
+                // Dropdown Filters
+                const matchesPref = pref === "" || item['都道府県'] === pref;
+                const matchesCity = city === "" || item['市区町村'] === city;
+
+                return matchesSearch && matchesPref && matchesCity;
+            });
+
+            renderTable(filtered);
+        }
+    </script>
+</body>
+
+</html>
