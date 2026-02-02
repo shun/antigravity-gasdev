@@ -13,6 +13,9 @@ Antigravity (Google Apps Script Web App)
 > どういうフォルダ構成になるかもREADMEも作ってください。
 > 環境はWindowsです
 
+## Documents
+- [requirements.md](./docs/requirements.md)
+
 ## Core Features
 1.  **Data Fetching**: GAS (`Code.js`) がアクティブなスプレッドシートからデータを配列として取得。
 2.  **Web Serving**: `doGet` 関数を用いて HTML テンプレートを出力。
