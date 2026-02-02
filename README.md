@@ -63,5 +63,5 @@ clasp push
 clasp deploy --description "v1.0.0"
 
 # Webアプリを開く
-clasp open --webapp
+clasp open-web-app
 ```
